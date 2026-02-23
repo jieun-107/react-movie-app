@@ -1,4 +1,4 @@
-import { star, thumbnail01 } from "../../assets/movies/assets";
+import { star } from "../../assets/movies/assets";
 
 export default function MovieListItem({title, vote_average, release_date, poster_path }: MovieType) {
   return (
@@ -17,7 +17,7 @@ export default function MovieListItem({title, vote_average, release_date, poster
               height={18}
               className="object-contain"
             />
-            <span className="text-yellow-500">{vote_average}</span>
+            <span className="text-yellow-500">{vote_average.toFixed(1)}</span>
           </div>
           <span className="text-yellow-500 font-bold">{release_date}</span>
         </div>
