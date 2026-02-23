@@ -9,9 +9,18 @@ export default function Movie() {
   const [nowLoading, setNowLoading] = useState(false);
   const [nowError, setNowError] = useState<Error | null>(null);
 
+  const [popularData, setPopularData] = useState<MovieType[]>([]);
+  const [popularLoading, setPopularLoading] = useState(false);
+  const [popularError, setPopularError] = useState<Error | null>(null); 
+
+  const [topRatedData, setTopRatedData] = useState<MovieType[]>([]);
+  const [topRatedLoading, setTopRatedLoading] = useState(false);
+  const [topRatedError, setTopRatedError] = useState<Error | null>(null);
+
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
+
     const fetchCategory = async (
       endpoint: string,
       setData: Dispatch<SetStateAction<MovieType[]>>,
@@ -20,6 +29,13 @@ export default function Movie() {
     ) => {
       setLoading(true);
       setError(null);
+
+      await new Promise((resolve) =>
+        setTimeout(
+          resolve,
+          [3000, 4000, 5000, 6000, 7000][Math.floor(Math.random() * 5)],
+        ),
+      );
       try {
         const {
           data: { results },
@@ -36,6 +52,8 @@ export default function Movie() {
     };
 
     fetchCategory("now_playing", setNowData, setNowLoading, setNowError);
+    fetchCategory("popular", setPopularData, setPopularLoading, setPopularError);
+    fetchCategory("top_rated", setTopRatedData, setTopRatedLoading, setTopRatedError);
 
     return () => controller.abort();
   }, []);
@@ -49,6 +67,18 @@ export default function Movie() {
         movies={nowData}
         loading={nowLoading}
         error={nowError}
+      />
+      <MovieList
+        title="Popular"
+        movies={popularData}
+        loading={popularLoading}
+        error={popularError}
+      />
+      <MovieList
+        title="Top Rated"
+        movies={topRatedData}
+        loading={topRatedLoading}
+        error={topRatedError}
       />
     </>
   );
