@@ -3,20 +3,24 @@ import MovieHeader from "./MovieHeader";
 import MovieList from "./MovieList";
 import MovieMain from "./MovieMain";
 import { axiosInstance } from "../../api/axios";
+import { useInView } from "react-intersection-observer";
 
 export default function Movie() {
   const [nowData, setNowData] = useState<MovieType[]>([]);
   const [nowLoading, setNowLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [nowError, setNowError] = useState<Error | null>(null);
 
-  const [popularData, setPopularData] = useState<MovieType[]>([]);
-  const [popularLoading, setPopularLoading] = useState(false);
-  const [popularError, setPopularError] = useState<Error | null>(null); 
-
-  const [topRatedData, setTopRatedData] = useState<MovieType[]>([]);
-  const [topRatedLoading, setTopRatedLoading] = useState(false);
-  const [topRatedError, setTopRatedError] = useState<Error | null>(null);
-
+  const { ref } = useInView({
+    threshold: 0.5,
+    rootMargin: "200px",
+    onChange: (inView: boolean) => {
+      if (inView && !nowLoading && hasMore) {
+        setPage((prev) => prev + 1);
+      }
+    },
+  });
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
@@ -30,18 +34,19 @@ export default function Movie() {
       setLoading(true);
       setError(null);
 
-      await new Promise((resolve) =>
-        setTimeout(
-          resolve,
-          [3000, 4000, 5000, 6000, 7000][Math.floor(Math.random() * 5)],
-        ),
-      );
+      // await new Promise((resolve) =>
+      //   setTimeout(
+      //     resolve,
+      //     [3000, 4000, 5000, 6000, 7000][Math.floor(Math.random() * 5)],
+      //   ),
+      // );
       try {
         const {
-          data: { results },
-        } = await axiosInstance.get(`/${endpoint}`, { signal });
-        console.log(results);
-        setData(results);
+          data: { results, total_pages },
+        } = await axiosInstance.get(`/${endpoint}?page=${page}`, { signal });
+        setHasMore(page < total_pages);
+        if (page === 1) setData(results);
+        else setData((prev) => [...prev, ...results]);
       } catch (e) {
         if (e instanceof Error && e.name !== "CanceledError") {
           setError(e);
@@ -52,11 +57,9 @@ export default function Movie() {
     };
 
     fetchCategory("now_playing", setNowData, setNowLoading, setNowError);
-    fetchCategory("popular", setPopularData, setPopularLoading, setPopularError);
-    fetchCategory("top_rated", setTopRatedData, setTopRatedLoading, setTopRatedError);
 
     return () => controller.abort();
-  }, []);
+  }, [page]);
 
   return (
     <>
@@ -68,18 +71,7 @@ export default function Movie() {
         loading={nowLoading}
         error={nowError}
       />
-      <MovieList
-        title="Popular"
-        movies={popularData}
-        loading={popularLoading}
-        error={popularError}
-      />
-      <MovieList
-        title="Top Rated"
-        movies={topRatedData}
-        loading={topRatedLoading}
-        error={topRatedError}
-      />
+      <div ref={ref}></div>
     </>
   );
 }
